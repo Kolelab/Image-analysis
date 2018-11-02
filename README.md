@@ -1,6 +1,6 @@
 # Image-analysis
 
-Scripts are written in Microsoft Visual Basic and were confirmed to run on Windows compatible computers in Excel 2013 or newer. This code provided here is only the source code and needs to be imported into Microsoft Visual Basic 
+Scripts are written in Microsoft Visual Basic and were confirmed to run on Windows compatible computers in Excel 2013 or newer. This code provided here is only the source code and needs to be imported into Microsoft Visual Basic. Buttons need to be created and linked to the code.
 
 Image splitter: The splitter is implemented to work on .da files as saved by Neuroplex (RedShirt Imaging).
 Every other frame of the .da file is split and as a final result two files are saved (odd 1-3-5 and so on and even 2-4-6...)
