@@ -1,0 +1,176 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\vieww12000\viewh15840\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs20 \cf0 '        	Written by Marko Popovic\
+'	Splits neuroplex .da files into two files .odd and .even\
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 Private Sub CommandButton1_Click()\
+    Dim filetoopen As Variant\
+    Dim ff As Integer\
+    Dim header(2559) As Integer\
+    Dim istart As Integer\
+    Dim istop As Integer\
+    Dim frameint As Long\
+    Dim nrows As Long\
+    Dim ncolumns As Long\
+    Dim nframes As Long\
+    Dim newnframes As Long\
+    Dim newframeint As Long\
+    Dim currentpix1() As Integer\
+    Dim currentbncs1() As Integer\
+    Dim currentfooter1() As Integer\
+    \
+    Dim fcurrentpix1() As Integer\
+    Dim fcurrentpix2() As Integer\
+    \
+    Dim fcurrentbncs1() As Integer\
+    Dim fcurrentbncs2() As Integer\
+    \
+    \
+    Dim fcurrentfooter() As Integer\
+    Dim newpixsize As Long\
+    Dim pixsize As Long\
+    Dim footersize As Long\
+    Dim bncsize As Long\
+    Dim newbncsize As Long\
+    Dim varArray As Variant\
+    Dim i As Integer\
+    Dim ifile As Integer\
+    Dim ipix As Integer\
+    Dim counter As Integer\
+    Dim firstd, secondd As Double\
+    \
+    With Application\
+        .DecimalSeparator = "."\
+        .ThousandsSeparator = ","\
+        .UseSystemSeparators = False\
+    End With\
+   \
+    \
+    \
+    Application.Calculation = xlCalculationAutomatic\
+\
+    \
+    \
+    ff = FreeFile\
+    ChDrive (Left(ThisWorkbook.Path, 2))\
+    ChDir (ThisWorkbook.Path)\
+    filetoopen = Application.GetOpenFilename("Neuroplex Data Files (*.da), *.da", FilterIndex:=2, MultiSelect:=True)\
+    If Not IsArray(filetoopen) Then Exit Sub\
+    istart = LBound(filetoopen)\
+    istop = UBound(filetoopen)\
+    For i = 1 To istop\
+        Open filetoopen(i) For Binary As #ff\
+            Get #ff, , header\
+            nrows1 = header(385)\
+            ncolumns1 = header(384)\
+            nframes1 = header(4)\
+            frameint1 = header(388)\
+            mbnc1 = header(391)\
+            If mbnc1 = 0 Then mbnc1 = 1\
+            bncsize1 = 8 * mbnc1 * nframes1 - 1\
+            pixsize1 = nrows1 * ncolumns1 * nframes1 - 1\
+            footersize1 = nrows1 * ncolumns1 + 8 - 1\
+            ReDim currentbncs1(bncsize1)\
+            ReDim currentfooter1(footersize1)\
+            ReDim currentpix1(pixsize1)\
+            Get #ff, , currentpix1\
+            Get #ff, , currentbncs1\
+            Get #ff, , currentfooter1\
+        Close #ff\
+        \
+    '    pixstart1 = Worksheets("Pix").Range("A2").Value\
+    '    pixstop1 = Worksheets("Pix").Range("A3").Value\
+    '   pixcol2 = Worksheets("Pix").Range("B2").Value\
+    '   pixrow2 = Worksheets("Pix").Range("B3").Value\
+        \
+        fncolumns = ncolumns1\
+        fnrows = nrows1\
+        fnframes = nframes1 \\ 2\
+        \
+        fpixsize = fnrows * fncolumns * fnframes - 1\
+        ffootersize = fnrows * fncolumns + 8 - 1\
+        fbncsize = 8 * mbnc1 * fnframes - 1\
+        \
+        ReDim fcurrentfooter(ffootersize)\
+        ReDim fcurrentpix1(fpixsize)\
+        ReDim fcurrentbncs1(fbncsize)\
+        ReDim fcurrentpix2(fpixsize)\
+        ReDim fcurrentbncs2(fbncsize)\
+        \
+        'header(385) = fnrows\
+        'header(384) = fncolumns\
+        'header(391) = 1\
+        header(4) = fnframes\
+        frameint1 = frameint1 * 2\
+        header(388) = frameint1\
+        header(391) = mbnc1 * 2\
+        firstd = 0\
+        secondd = 0\
+        \
+        For ipix = 0 To fnrows * fncolumns - 1\
+            For iframe = 0 To fnframes - 1\
+                fcurrentpix1(ipix * fnframes + iframe) = currentpix1(ipix * nframes1 + 2 * iframe)\
+                firstd = firstd + fcurrentpix1(ipix * fnframes + iframe) / 1000000\
+                fcurrentpix2(ipix * fnframes + iframe) = currentpix1(ipix * nframes1 + 2 * iframe + 1)\
+                secondd = secondd + fcurrentpix2(ipix * fnframes + iframe) / 1000000\
+            Next\
+            fcurrentfooter(ipix) = 0\
+        Next\
+        \
+        'For ipix = 0 To 7\
+        '    For iframe = 0 To fnframes - 1\
+        '        For imbnc = 0 To mbnc1 - 1\
+        '            fcurrentbncs(ipix * fnframes * mbnc1 + iframe * mbnc1 + imbnc) = currentbncs1(ipix * nframes1 * mbnc1 + (pixstart1 + iframe) * mbnc1 + imbnc)\
+        '        Next\
+        '    Next\
+        'Next\
+\
+        \
+'        For iframe = 0 To fnframes - 1\
+'            For iiii = 0 To 7\
+'                For mmmm = 1 To mbnc1\
+'                    fcurrentbncs(iiii * mmmm * fnframes - 1) = 1\
+'                Next\
+'            Next\
+'        Next\
+        If firstd > secondd Then\
+            Open Mid(filetoopen(i), 1, Len(filetoopen(i)) - 3) + ".even.da" For Binary As #ff\
+                Put #ff, , header\
+                Put #ff, , fcurrentpix1\
+                Put #ff, , currentbncs1\
+                Put #ff, , currentfooter1\
+            Close #ff\
+            Open Mid(filetoopen(i), 1, Len(filetoopen(i)) - 3) + ".odd.da" For Binary As #ff\
+                Put #ff, , header\
+                Put #ff, , fcurrentpix2\
+                Put #ff, , currentbncs1\
+                Put #ff, , currentfooter1\
+            Close #ff\
+        Else\
+            Open Mid(filetoopen(i), 1, Len(filetoopen(i)) - 3) + ".odd.da" For Binary As #ff\
+                Put #ff, , header\
+                Put #ff, , fcurrentpix1\
+                Put #ff, , currentbncs1\
+                Put #ff, , currentfooter1\
+            Close #ff\
+            Open Mid(filetoopen(i), 1, Len(filetoopen(i)) - 3) + ".even.da" For Binary As #ff\
+                Put #ff, , header\
+                Put #ff, , fcurrentpix2\
+                Put #ff, , currentbncs1\
+                Put #ff, , currentfooter1\
+            Close #ff\
+        \
+        End If\
+        \
+    \
+    Next\
+End Sub\
+}
